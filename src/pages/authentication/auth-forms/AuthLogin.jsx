@@ -30,6 +30,9 @@ import EyeInvisibleOutlined from '@ant-design/icons/EyeInvisibleOutlined';
 import FirebaseSocial from './FirebaseSocial';
 
 // ============================|| JWT - LOGIN ||============================ //
+import axios from 'axios';
+import { ENDPOINTS } from 'src/api/endpoints';
+
 
 export default function AuthLogin({ isDemo = false }) {
   const [checked, setChecked] = React.useState(false);
@@ -41,6 +44,26 @@ export default function AuthLogin({ isDemo = false }) {
 
   const handleMouseDownPassword = (event) => {
     event.preventDefault();
+  };
+
+  const handleLogin = async (values, { setErrors, setSubmitting }) => {
+    try {
+      const response = await axios.post(ENDPOINTS.LOGIN, {
+        email: values.email,
+        password: values.password,
+      });
+      const { access, refresh } = response.data;
+      localStorage.setItem('accessToken', access);
+      localStorage.setItem('refreshToken', refresh);
+      navigate('/dashboard/default');
+    } catch (error) {
+      if (error.response && error.response.data && error.response.data.detail) {
+        setErrors({ submit: error.response.data.detail });
+      } else {
+        setErrors({ submit: 'Something went wrong. Please try again.' });
+      }
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -55,6 +78,7 @@ export default function AuthLogin({ isDemo = false }) {
           email: Yup.string().email('Must be a valid email').max(255).required('Email is required'),
           password: Yup.string().max(255).required('Password is required')
         })}
+        onSubmit={handleLogin}
       >
         {({ errors, handleBlur, handleChange, handleSubmit, isSubmitting, touched, values }) => (
           <form noValidate onSubmit={handleSubmit}>
@@ -145,14 +169,6 @@ export default function AuthLogin({ isDemo = false }) {
                     Login
                   </Button>
                 </AnimateButton>
-              </Grid>
-              <Grid item xs={12}>
-                <Divider>
-                  <Typography variant="caption"> Login with</Typography>
-                </Divider>
-              </Grid>
-              <Grid item xs={12}>
-                <FirebaseSocial />
               </Grid>
             </Grid>
           </form>
